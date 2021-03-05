@@ -25,7 +25,7 @@ namespace ConfigurationMiddleware.Extensions
 
         public static IServiceCollection AddContext(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<ConfigurationMiddlewareDbContext>(x => x.UseSqlServer(configuration.GetConnectionString("Connection")));
+            services.AddDbContext<ConfigurationMiddlewareDbContext>(x => x.UseInMemoryDatabase("InMemoryDatabase"));
             return services;
         }
 

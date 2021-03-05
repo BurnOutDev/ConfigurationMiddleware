@@ -137,6 +137,9 @@ namespace Application
             // hash password
             account.PasswordHash = BC.HashPassword(model.Password);
 
+            account.Verified = DateTime.UtcNow;
+            account.VerificationToken = null;
+
             // save account
             _context.Accounts.Add(account);
             _context.SaveChanges();
