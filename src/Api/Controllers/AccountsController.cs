@@ -2,6 +2,7 @@
 using AutoMapper;
 using Domain.Entities;
 using Domain.Models.Accounts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -24,6 +25,30 @@ namespace Api.Controllers
         {
             _accountService = accountService;
             _mapper = mapper;
+        }
+
+        [HttpGet("seed")]
+        [AllowAnonymous]
+        public IActionResult Seed()
+        {
+            var email = "user@email.com";
+            var password = "password";
+
+            _accountService.Register(new RegisterRequest
+            {
+                AcceptTerms = true,
+                ConfirmPassword = password,
+                Email = email,
+                FirstName = "Firstname",
+                LastName = "Lastname",
+                Password = password
+            }, "InMemory Initialization");
+
+            return Ok(new
+            {
+                Email = email,
+                Password = password
+            });
         }
 
         [HttpPost("authenticate")]

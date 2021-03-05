@@ -21,11 +21,14 @@ namespace CryptoVision.Api.Services
 
         public Timer MatchingTimer { get; set; }
 
-        public SortedDictionary<long, Game> TimeMatches { get; set; }
-        public SortedDictionary<decimal, Game> PriceMatches { get; set; }
+        public SortedDictionary<long, Guid> TimeMatches { get; set; }
+        public SortedDictionary<decimal, Guid> PriceMatches { get; set; }
 
         public HashSet<BetModel> UnmatchedLongBets { get; set; }
         public HashSet<BetModel> UnmatchedShortBets { get; set; }
+
+        public List<Game> PendingMatched { get; set; }
+        public List<Game> Matched { get; set; }
 
         public List<Game> EndedMatches { get; set; }
 
@@ -33,12 +36,15 @@ namespace CryptoVision.Api.Services
         {
             UnmatchedShortBets = new HashSet<BetModel>();
             UnmatchedLongBets = new HashSet<BetModel>();
-            TimeMatches = new SortedDictionary<long, Game>();
-            PriceMatches = new SortedDictionary<decimal, Game>();
+            TimeMatches = new SortedDictionary<long, Guid>();
+            PriceMatches = new SortedDictionary<decimal, Guid>();
+            PendingMatched = new List<Game>();
+            Matched = new List<Game>();
 
             MatchingTimer = new Timer();
             MatchingTimer.Interval = 500;
             MatchingTimer.Elapsed += MatchingTimer_Elapsed;
+            MatchingTimer.Start();
         }
 
         private void MatchingTimer_Elapsed(object sender, ElapsedEventArgs e)
@@ -49,6 +55,8 @@ namespace CryptoVision.Api.Services
                 PlayerWhoBetShort = o.Long ? i.User : o.User,
                 PlayerWhoBetLong = o.Short ? i.User : o.User
             });
+
+            PendingMatched.AddRange(matched);
         }
 
         public void AddBet(BetModel model)
@@ -65,7 +73,40 @@ namespace CryptoVision.Api.Services
 
         public void PriceUpdated(ResponseKlineStreamModel data)
         {
-            PriceMatches.Select(x => x.Value).ToList().ForEach(x => x.KlineStreams.Add(data));
+            var unixDate = data.EventTime + 60000;
+            var openPrice = data.KlineItems.OpenPrice;
+
+            if (PendingMatched.Count > 0)
+            {
+                Matched.AddRange(PendingMatched);
+                PendingMatched.ForEach(x =>
+                {
+                    TimeMatches.Add(unixDate, x.Uid);
+                    PriceMatches.Add(openPrice, x.Uid);
+                });
+                PendingMatched.RemoveAll(x => Matched.Select(y => y.Uid).Contains(x.Uid));
+            }
+
+            Matched.ForEach(x => x.KlineStreams.Add(data));
+        }
+
+        /// <summary>
+        /// Convert Unix time value to a DateTime object.
+        /// </summary>
+        /// <param name="unixtime">The Unix time stamp you want to convert to DateTime.</param>
+        /// <returns>Returns a DateTime object that represents value of the Unix time.</returns>
+        public DateTime UnixTimeToDateTime(long unixtime)
+        {
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddMilliseconds(unixtime).ToLocalTime();
+            return dtDateTime;
+        }
+
+        public static double DateTimeToUnixTimestamp(DateTime dateTime)
+        {
+            DateTime unixStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            long unixTimeStampInTicks = (dateTime.ToUniversalTime() - unixStart).Ticks;
+            return (double)unixTimeStampInTicks / TimeSpan.TicksPerSecond;
         }
 
         public void CheckEndedGamesAndSendEvent()
@@ -106,6 +147,13 @@ public class BetModel
     public Player User { get; set; }
     public bool Long { get; set; }
     public bool Short { get; set; }
+}
+
+public class Player
+{
+    public uint Account { get; set; }
+    public string SignalRConnection { get; set; }
+    public string Email { get; set; }
 }
 
 public partial class Game
