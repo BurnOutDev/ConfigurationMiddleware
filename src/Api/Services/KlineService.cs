@@ -30,11 +30,11 @@ namespace CryptoVision.Api.Services
             this.gameService = gameService;
         }
 
-        public void Subscribe(string symbol, string interval, string callerId)
+        public void Subscribe(string callerId)
         {
+            var key = "btcusdt";
             lock(_lock)
             {
-                var key = $"{symbol}_{interval}";
                 if (!WebSockets.ContainsKey(key))
                 {
                     try
@@ -42,7 +42,7 @@ namespace CryptoVision.Api.Services
                         WebSockets.TryAdd(key, new WebSocket($"{BaseUrl}/ws/btcusdt@kline_1m"));
                         WebSockets[key].SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls | System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls12;
                         WebSockets[key].OnOpen += Opened;
-                        WebSockets[key].OnMessage += (sender, e) => MessageReceived(e, symbol, interval);
+                        WebSockets[key].OnMessage += (sender, e) => MessageReceived(e);
                         WebSockets[key].OnError += ErrorMsg;
                         WebSockets[key].Connect();
                     }
@@ -70,7 +70,7 @@ namespace CryptoVision.Api.Services
                 NumberOfSubscribed[subsription.Key].Remove(callerId);
                 if(NumberOfSubscribed[subsription.Key].Count == 0)
                 {
-                    WebSockets[subsription.Key].OnMessage -= (sender, e) => MessageReceived(e, "", "");
+                    WebSockets[subsription.Key].OnMessage -= (sender, e) => MessageReceived(e);
                     WebSockets[subsription.Key].Close();
                     WebSockets.TryRemove(subsription.Key, out _);
                 }
@@ -87,7 +87,7 @@ namespace CryptoVision.Api.Services
             
         }
 
-        private void MessageReceived(MessageEventArgs e, string symbol, string interval)
+        private void MessageReceived(MessageEventArgs e)
         {
             var parsed = JObject.Parse(e.Data);
             var item = parsed["k"];
@@ -120,7 +120,7 @@ namespace CryptoVision.Api.Services
 
             gameService.PriceUpdated(data);
 
-            _hubContext.Clients.All.SendAsync($"{symbol}_{interval}_Get", new GeneralMessage<ResponseKlineStreamModel> { Symbol = symbol, Interval = interval, Message = data });
+            _hubContext.Clients.All.SendAsync($"btcusdt_1m_Get", new GeneralMessage<ResponseKlineStreamModel> { Symbol = "btcusdt", Interval = "1m", Message = data });
             // MessageEmitter.Invoke(this, new GeneralMessage { Symbol = symbol, Interval = interval, Message = e.Data });
         }
     }

@@ -1,22 +1,5 @@
-﻿using CryptoVision.Api.Helpers;
-using CryptoVision.Api.Models;
-using CryptoVision.Api.Services;
-using CryptoVision.Core.Accounts;
-using CryptoVision.Core.Accounts.Commands;
-using CryptoVision.Core.Accounts.Dtos;
-using CryptoVision.Core.Accounts.Queries;
-using CryptoVision.Core.Permissions;
-using CryptoVision.Shared.CommandsAndQueries;
-using CryptoVision.Shared.Utils;
+﻿using CryptoVision.Api.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CryptoVision.Api.Controllers
 {
@@ -31,6 +14,7 @@ namespace CryptoVision.Api.Controllers
             this.gameService = gameService;
         }
 
+        [HttpPost]
         public IActionResult AddBet(BetModel request)
         {
             gameService.AddBet(request);

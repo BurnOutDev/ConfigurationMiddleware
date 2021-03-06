@@ -37,7 +37,7 @@ namespace CryptoVision.Api.Hubs
 
         public void SubscribeKline(string symbol, string interval)
         {
-            _klineService.Subscribe(symbol, interval, Context.ConnectionId);
+            _klineService.Subscribe(Context.ConnectionId);
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
