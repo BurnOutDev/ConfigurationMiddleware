@@ -10,22 +10,22 @@ using System.Threading.Tasks;
 using static Game;
 using Api.Hubs;
 using CryptoVision.Api.Services;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace CryptoVision.Api.Services
 {
     public class GameService
     {
-        public decimal LastPrice { get; set; }
-        public IHubContext<KlineHub> BetHub { get; set; }
-
         private int Threshold = 5;
         private int ThresholdTime = 60000;
 
-        public Timer MatchingTimer { get; set; }
-
+        #region SortedDictionaries
         public SortedDictionary<long, Guid> TimeMatches { get; set; }
         public SortedDictionary<decimal, Guid> LongPriceMatches { get; set; }
         public SortedDictionary<decimal, Guid> ShortPriceMatches { get; set; }
+
+        #endregion
 
         public HashSet<BetModel> UnmatchedLongBets { get; set; }
         public HashSet<BetModel> UnmatchedShortBets { get; set; }
@@ -46,32 +46,40 @@ namespace CryptoVision.Api.Services
             Matched = new List<Game>();
             EndedMatches = new List<Game>();
 
-            MatchingTimer = new Timer();
-            MatchingTimer.Interval = 500;
-            MatchingTimer.Elapsed += MatchingTimer_Elapsed;
-            MatchingTimer.Start();
+            Task.Run(MatchingTimer);
         }
 
-        private void MatchingTimer_Elapsed(object sender, ElapsedEventArgs e)
+        private void MatchingTimer()
         {
-            var matched = UnmatchedLongBets.Join(UnmatchedShortBets, @long => @long.Amount, @short => @short.Amount, (@long, @short) => new Tuple<BetModel, BetModel, Game>(
-                @long, @short, new Game
-                {
-                    Amount = @long.Amount,
-                    PlayerWhoBetShort = @short.User,
-                    PlayerWhoBetLong = @long.User
-                })).ToList();
-
-            matched.ForEach(p =>
+            while (true)
             {
-                UnmatchedLongBets.Remove(p.Item1);
-                UnmatchedShortBets.Remove(p.Item2);
+                var mat = new List<Tuple<BetModel, BetModel, Game>>();
 
-                PendingMatched.Add(p.Item3);
+                UnmatchedLongBets.OrderBy(x => x.Amount).ToList().ForEach(x =>
+                {
+                    var sb = UnmatchedShortBets.FirstOrDefault(e => e.Amount == x.Amount);
 
-                SendMessage(nameof(MatchPending), new MatchPending(p.Item1.User, p.Item3.Uid, p.Item2.User));
-                SendMessage(nameof(MatchPending), new MatchPending(p.Item2.User, p.Item3.Uid, p.Item1.User));
-            });
+                    if (sb != null)
+                    {
+                        var g = new Game
+                        {
+                            Amount = x.Amount,
+                            PlayerWhoBetShort = sb.User,
+                            PlayerWhoBetLong = x.User
+                        };
+
+                        UnmatchedLongBets.Remove(x);
+                        UnmatchedShortBets.Remove(sb);
+
+                        PendingMatched.Add(g);
+
+                        SendMessage(new MatchPending(x.User, g.Uid, sb.User));
+                        SendMessage(new MatchPending(sb.User, g.Uid, x.User));
+                    }
+                });
+
+                Thread.Sleep(500);
+            }
         }
 
         public void AddBet(BetModel model)
@@ -85,7 +93,7 @@ namespace CryptoVision.Api.Services
                 UnmatchedShortBets.Add(model);
             }
 
-            SendMessage(nameof(BetPlaced), new BetPlaced(model.User, model.Amount, model.Long, model.Short));
+            SendMessage(new BetPlaced(model.User, model.Amount, model.Long, model.Short));
         }
 
         public void PriceUpdated(ResponseKlineStreamModel data)
@@ -99,15 +107,18 @@ namespace CryptoVision.Api.Services
                 //TODO Matched and PendingMatched can be filled with new values between steps
                 //var g = PendingMatched.Select(x => x.Uid);
 
-                Matched.AddRange(PendingMatched);
-                PendingMatched.ForEach(x =>
+                var gids = PendingMatched.Select(x => x.Uid);
+
+                Matched.AddRange(PendingMatched.Where(x => gids.Contains(x.Uid)));
+
+                PendingMatched.Where(x => gids.Contains(x.Uid)).ToList().ForEach(x =>
                 {
                     TimeMatches.Add(unixDate + ThresholdTime, x.Uid);
                     LongPriceMatches.Add(openPrice + Threshold, x.Uid);
-                    ShortPriceMatches.Add(openPrice + Threshold, x.Uid);
-                    ;
-                    SendMessage(nameof(MatchStarted), new MatchStarted(x.PlayerWhoBetLong, openPrice));
-                    SendMessage(nameof(MatchStarted), new MatchStarted(x.PlayerWhoBetShort, openPrice));
+                    ShortPriceMatches.Add(openPrice - Threshold, x.Uid);
+                    
+                    SendMessage(new MatchStarted(x.PlayerWhoBetLong, openPrice));
+                    SendMessage(new MatchStarted(x.PlayerWhoBetShort, openPrice));
                 });
                 PendingMatched.RemoveAll(x => Matched.Select(y => y.Uid).Contains(x.Uid));
             }
@@ -145,14 +156,14 @@ namespace CryptoVision.Api.Services
             ShortPriceMatches.Remove(ShortPriceMatches.FirstOrDefault(m => m.Value == g.Uid).Key);
             TimeMatches.Remove(TimeMatches.FirstOrDefault(m => m.Value == g.Uid).Key);
 
-            SendMessage(nameof(GameEnded), new GameEnded(g.PlayerWhoBetShort));
-            SendMessage(nameof(GameEnded), new GameEnded(g.PlayerWhoBetLong));
+            SendMessage(new GameEnded(g.PlayerWhoBetShort));
+            SendMessage(new GameEnded(g.PlayerWhoBetLong));
         }
-        
-        public void SendMessage(string name, SignalMessage message)
+
+        public void SendMessage(SignalMessage message)
         {
             //BetHub.Clients.Client(connectionId).SendAsync(name, message);
-            Console.WriteLine($"Connection: {message.Player.SignalRConnection} | {name}: {message}");
+            Console.WriteLine($"Connection: {message.Player.SignalRConnection} | {message.Name}: {message}");
         }
     }
 }
@@ -161,7 +172,7 @@ namespace SignalREvents
 {
     public class BetPlaced : SignalMessage
     {
-        public BetPlaced(Player receiver, decimal amount, bool @long, bool @short) : base(receiver)
+        public BetPlaced(Player receiver, decimal amount, bool @long, bool @short) : base(receiver, nameof(BetPlaced))
         {
             Amount = amount;
             Long = @long;
@@ -182,7 +193,7 @@ namespace SignalREvents
 
     public class MatchPending : SignalMessage
     {
-        public MatchPending(Player receiver, Guid gid, Player opponent) : base(receiver)
+        public MatchPending(Player receiver, Guid gid, Player opponent) : base(receiver, nameof(MatchPending))
         {
             GameId = gid;
             Opponent = opponent;
@@ -197,7 +208,7 @@ namespace SignalREvents
 
     public class MatchStarted : SignalMessage
     {
-        public MatchStarted(Player receiver, decimal startPrice) : base(receiver)
+        public MatchStarted(Player receiver, decimal startPrice) : base(receiver, nameof(MatchStarted))
         {
             StartPrice = startPrice;
         }
@@ -207,29 +218,35 @@ namespace SignalREvents
 
     public class GameEnded : SignalMessage
     {
-        public GameEnded(Player receiver) : base(receiver)
+        public GameEnded(Player receiver) : base(receiver, nameof(GameEnded))
         {
         }
 
         public bool Won { get; set; }
     }
 
-    public class PriceUpdated : SignalMessage
+    public class PriceEvent : SignalMessage
     {
-        public PriceUpdated(Player receiver, decimal price) : base(receiver)
+        public PriceEvent(Player receiver, decimal currentPrice, long currentUnix) : base(receiver, nameof(PriceEvent))
         {
-
+            CurrentPrice = currentPrice;
+            CurrentUnix = currentUnix;
         }
+
+        public decimal CurrentPrice { get; set; }
+        public long CurrentUnix { get; set; }
     }
 
     public class SignalMessage
     {
-        public SignalMessage(Player receiver)
+        public SignalMessage(Player receiver, string name)
         {
             Player = receiver;
+            Name = name;
         }
 
         public Player Player { get; set; }
+        public string Name { get; set; }
     }
 }
 
@@ -238,12 +255,6 @@ public class Constants
     public string GameEnded { get; set; } = nameof(GameEnded);
     public string GameStarted { get; set; } = nameof(GameStarted);
     public string TimeElapsed { get; set; } = nameof(TimeElapsed);
-}
-
-public class PriceEvent
-{
-    public decimal CurrentPrice { get; set; }
-    public int CurrentUnix { get; set; }
 }
 
 public class BetModel
