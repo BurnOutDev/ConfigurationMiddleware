@@ -80,8 +80,8 @@ namespace CryptoVision.Api.Services
 
                         PendingMatched.Add(g);
 
-                        SendMessage(new MatchPending(x.User, g.Uid, sb.User));
-                        SendMessage(new MatchPending(sb.User, g.Uid, x.User));
+                        SendMessage(new MatchPending(x.User, g.Uid, sb.User.Name));
+                        SendMessage(new MatchPending(sb.User, g.Uid, x.User.Name));
                     }
                 });
 
@@ -172,7 +172,7 @@ namespace CryptoVision.Api.Services
             var cl = klineHub.Clients.Client(EmailConnectionId[message.Player.Email]);
 
             klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name, message);
-            Console.WriteLine($"Connection: {message.Player.SignalRConnection} | {message.Name}: {message}");
+            Console.WriteLine($"{message.Name}: {message}");
         }
     }
 }
@@ -202,17 +202,17 @@ namespace SignalREvents
 
     public class MatchPending : SignalMessage
     {
-        public MatchPending(Player receiver, Guid gid, Player opponent) : base(receiver, nameof(MatchPending))
+        public MatchPending(Player receiver, Guid gid, string opponentName) : base(receiver, nameof(MatchPending))
         {
             GameId = gid;
-            Opponent = opponent;
+            OpponentName = opponentName;
         }
 
         public Guid GameId { get; set; }
 
-        public Player Opponent { get; set; }
+        public string OpponentName { get; set; }
 
-        public override string ToString() => $"E: {Player.Email} Opponent: {Opponent.Email}";
+        public override string ToString() => $"E: {Player.Email} Opponent: {OpponentName}";
     }
 
     public class MatchStarted : SignalMessage
@@ -276,8 +276,7 @@ public class BetModel
 
 public class Player
 {
-    public uint Account { get; set; }
-    public string SignalRConnection { get; set; }
+    public string Name { get; set; }
     public string Email { get; set; }
 }
 

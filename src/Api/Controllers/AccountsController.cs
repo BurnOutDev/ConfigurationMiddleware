@@ -38,9 +38,9 @@ namespace Api.Controllers
             {
                 AcceptTerms = true,
                 ConfirmPassword = password,
-                Email = email,
-                FirstName = "Firstname",
-                LastName = "Lastname",
+                Email = "iraklimurusidze@live.com",
+                FirstName = "Irakli",
+                LastName = "Murusidze",
                 Password = password
             }, "InMemory Initialization");
 
@@ -48,7 +48,7 @@ namespace Api.Controllers
             {
                 AcceptTerms = true,
                 ConfirmPassword = password,
-                Email = "user2@email.com",
+                Email = "user@email.com",
                 FirstName = "Firstname",
                 LastName = "Lastname",
                 Password = password

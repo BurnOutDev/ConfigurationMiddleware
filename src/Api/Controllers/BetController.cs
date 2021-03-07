@@ -1,6 +1,8 @@
 ﻿using Api.Controllers;
+using Application;
 using CryptoVision.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace CryptoVision.Api.Controllers
 {
@@ -9,10 +11,12 @@ namespace CryptoVision.Api.Controllers
     public class BetController : BaseController
     {
         private readonly GameService gameService;
+        private readonly IAccountService accountService;
 
-        public BetController(GameService gameService)
+        public BetController(GameService gameService, IAccountService accountService)
         {
             this.gameService = gameService;
+            this.accountService = accountService;
         }
 
         [HttpPost]
@@ -25,7 +29,8 @@ namespace CryptoVision.Api.Controllers
                 Short = !request.IsRiseOrFall,
                 User = new Player
                 {
-                    Email = Account.Email
+                    Email = Account.Email,
+                    Name = $"{Account.FirstName} {Account.LastName}"
                 }
             });
 

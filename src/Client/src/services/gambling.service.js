@@ -1,12 +1,14 @@
 import config from '../config'
 import { fetchWrapper, history } from '../helpers'
 import { HubConnectionBuilder } from '@aspnet/signalr'
+import { accountService } from '.'
+import { HubConnectionState } from '@aspnet/signalr'
 
 //#region Connection
 
 const connection = new HubConnectionBuilder()
   .withUrl('https://localhost:5001/kline', {
-    accessTokenFactory: () => localStorage.getItem('token')
+    accessTokenFactory: () => accountService.userValue.jwtToken
   })
   .build()
 
@@ -15,13 +17,29 @@ const connection = new HubConnectionBuilder()
 const baseUrl = `${config.apiUrl}/api/bet`
 
 const placeBet = (amount, isRiseOrFall) => {
-  return connection
-    .invoke('RegisterConnection')
-    .then(() =>
-      fetchWrapper
-        .post(`${baseUrl}`, { amount, isRiseOrFall })
-        .catch((err) => console.error(err))
-    )
+  if (gamblingService.connection.state === HubConnectionState.Connected)
+    return gamblingService.connection
+      .stop()
+      .then(() => gamblingService.connection.start())
+      .then(() => {
+        return connection
+          .invoke('RegisterConnection')
+          .then(() =>
+            fetchWrapper
+              .post(`${baseUrl}`, { amount, isRiseOrFall })
+              .catch((err) => console.error(err))
+          )
+      })
+  else
+    return gamblingService.connection.start().then(() => {
+      return connection
+        .invoke('RegisterConnection')
+        .then(() =>
+          fetchWrapper
+            .post(`${baseUrl}`, { amount, isRiseOrFall })
+            .catch((err) => console.error(err))
+        )
+    })
 }
 
 export const gamblingService = {
