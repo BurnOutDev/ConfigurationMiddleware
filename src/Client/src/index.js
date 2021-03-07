@@ -18,7 +18,6 @@ accountService
       document.getElementById('root')
     ))
   .catch(err => {
-    debugger
     if (err && err.name === 'TypeError') {
       ReactDOM.render(
         <Result

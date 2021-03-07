@@ -1,11 +1,12 @@
-﻿using CryptoVision.Api.Services;
+﻿using Api.Controllers;
+using CryptoVision.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CryptoVision.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BetController : ControllerBase
+    public class BetController : BaseController
     {
         private readonly GameService gameService;
 
@@ -15,11 +16,26 @@ namespace CryptoVision.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddBet(BetModel request)
+        public IActionResult AddBet(BetPlacement request)
         {
-            gameService.AddBet(request);
+            gameService.AddBet(new BetModel
+            {
+                Amount = request.Amount,
+                Long = request.IsRiseOrFall,
+                Short = !request.IsRiseOrFall,
+                User = new Player
+                {
+                    Email = Account.Email
+                }
+            });
 
             return Ok();
         }
+    }
+
+    public class BetPlacement
+    {
+        public decimal Amount { get; set; }
+        public bool IsRiseOrFall { get; set; }
     }
 }

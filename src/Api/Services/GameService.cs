@@ -172,7 +172,6 @@ namespace CryptoVision.Api.Services
             var cl = klineHub.Clients.Client(EmailConnectionId[message.Player.Email]);
 
             klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name, message);
-            klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name);
             Console.WriteLine($"Connection: {message.Player.SignalRConnection} | {message.Name}: {message}");
         }
     }

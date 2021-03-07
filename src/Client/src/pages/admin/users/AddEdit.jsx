@@ -59,8 +59,6 @@ const AddEdit = ({ userId, formRef, onClose }) => {
     }
 
     const createUser = (fields, setSubmitting) => {
-        debugger
-
         accountService.create(fields)
             .then(() => {
                 alertService.success('Added successfully.')

@@ -19,7 +19,6 @@ const success = (content) => {
 }
 
 const error = (content) => {
-    debugger
     message.error(content, duration)
 }
 

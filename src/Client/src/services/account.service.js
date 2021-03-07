@@ -2,6 +2,7 @@ import { BehaviorSubject } from 'rxjs'
 
 import config from '../config'
 import { fetchWrapper, history } from '../helpers'
+import { gamblingService } from './gambling.service'
 
 const userSubject = new BehaviorSubject(null)
 const baseUrl = `${config.apiUrl}/accounts`
@@ -14,6 +15,9 @@ const login = (email, password) => {
             localStorage.setItem('token', user.accessToken)
             startRefreshTokenTimer()
             return user
+        })
+        .then(() => {
+            gamblingService.connection.start()
         })
 }
 

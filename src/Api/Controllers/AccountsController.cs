@@ -44,11 +44,21 @@ namespace Api.Controllers
                 Password = password
             }, "InMemory Initialization");
 
-            return Ok(new
+            _accountService.Register(new RegisterRequest
             {
-                Email = email,
+                AcceptTerms = true,
+                ConfirmPassword = password,
+                Email = "user2@email.com",
+                FirstName = "Firstname",
+                LastName = "Lastname",
                 Password = password
-            });
+            }, "InMemory Initialization");
+
+            return Ok(_accountService.GetAll().Select(x => new
+            {
+                Email = x.Email,
+                Password = password
+            }));
         }
 
         [HttpPost("authenticate")]
