@@ -35,7 +35,11 @@ namespace CryptoVision.Api.Services
 
         public List<Game> EndedMatches { get; set; }
 
-        public GameService()
+        public Dictionary<string, string> EmailConnectionId { get; set; }
+
+        private readonly IHubContext<KlineHub> klineHub;
+
+        public GameService(IHubContext<KlineHub> klinehub)
         {
             UnmatchedShortBets = new HashSet<BetModel>();
             UnmatchedLongBets = new HashSet<BetModel>();
@@ -45,8 +49,11 @@ namespace CryptoVision.Api.Services
             PendingMatched = new List<Game>();
             Matched = new List<Game>();
             EndedMatches = new List<Game>();
+            EmailConnectionId = new Dictionary<string, string>();
 
             Task.Run(MatchingTimer);
+
+            klineHub = klinehub;
         }
 
         private void MatchingTimer()
@@ -162,7 +169,10 @@ namespace CryptoVision.Api.Services
 
         public void SendMessage(SignalMessage message)
         {
-            //BetHub.Clients.Client(connectionId).SendAsync(name, message);
+            var cl = klineHub.Clients.Client(EmailConnectionId[message.Player.Email]);
+
+            klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name, message);
+            klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name);
             Console.WriteLine($"Connection: {message.Player.SignalRConnection} | {message.Name}: {message}");
         }
     }

@@ -1,5 +1,7 @@
+using Domain.Entities;
 using Domain.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Persistence;
@@ -25,6 +27,14 @@ namespace Api.Middleware
 
         public async Task Invoke(HttpContext context, ConfigurationMiddlewareDbContext dataContext)
         {
+            var request = context.Request;
+
+            if (request.Path.StartsWithSegments("/kline", StringComparison.OrdinalIgnoreCase) &&
+               request.Query.TryGetValue("access_token", out var accessToken))
+            {
+                request.Headers.Add("Authorization", $"Bearer {accessToken}");
+            }
+
             var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
             if (token != null)
@@ -60,6 +70,19 @@ namespace Api.Middleware
                 // do nothing if jwt validation fails
                 // account is not attached to context so request won't have access to secure routes
             }
+        }
+    }
+
+    public class IdBasedUserIdProvider : IUserIdProvider
+    {
+        public string GetUserId(HubConnectionContext connection)
+        {
+            //TODO: Implement USERID Mapper Here
+            //throw new NotImplementedException();
+
+            var acc = (connection.GetHttpContext().Items["Account"] as Account)?.Email;
+
+            return acc;
         }
     }
 }

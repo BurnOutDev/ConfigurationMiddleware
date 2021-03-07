@@ -19,8 +19,8 @@ const WithNavbar = ({ content }) => {
                 <Content style={{ padding: '0 50px', marginTop: 64 }}>
                     {content}
                 </Content>
-                <Footer>
-                </Footer>
+                {/* <Footer>
+                </Footer> */}
             </Layout>
         </Switch>
     )

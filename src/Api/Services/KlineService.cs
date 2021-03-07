@@ -21,6 +21,7 @@ namespace CryptoVision.Api.Services
 
         private GameService gameService;
 
+        public Dictionary<string, string> Auths { get; set; }
 
         private readonly IHubContext<KlineHub> _hubContext;
 
@@ -28,6 +29,11 @@ namespace CryptoVision.Api.Services
         {
             _hubContext = hubContext;
             this.gameService = gameService;
+        }
+
+        public void Authenticate(string callerId, string token)
+        {
+            Auths.Add(callerId, token);
         }
 
         public void Subscribe(string callerId)

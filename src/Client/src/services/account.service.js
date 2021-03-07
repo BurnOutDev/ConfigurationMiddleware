@@ -11,6 +11,7 @@ const login = (email, password) => {
         .then(user => {
             // publish user to subscribers and start timer to refresh token
             userSubject.next(user)
+            localStorage.setItem('token', user.accessToken)
             startRefreshTokenTimer()
             return user
         })
@@ -21,6 +22,7 @@ const logout = () => {
     fetchWrapper.post(`${baseUrl}/revoke-token`, {})
     stopRefreshTokenTimer()
     userSubject.next(null)
+    localStorage.removeItem('token')
     history.push('/account/login')
 }
 

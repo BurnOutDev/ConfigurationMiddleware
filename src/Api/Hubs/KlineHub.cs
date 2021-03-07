@@ -1,5 +1,8 @@
 ﻿using Api.Hubs;
+using Api.Middleware;
 using CryptoVision.Api.Services;
+using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using System;
@@ -12,10 +15,12 @@ namespace CryptoVision.Api.Hubs
     public class KlineHub : Hub
     {
         private readonly KlineService _klineService;
+        private readonly GameService _gameService;
 
-        public KlineHub(KlineService klineService)
+        public KlineHub(KlineService klineService, GameService gameService)
         {
             _klineService = klineService;
+            _gameService = gameService;
         }
 
         public async Task<List<ResponseKlineModel>> GetKline(string symbol, string interval, long startTime, long endTime)
@@ -35,14 +40,28 @@ namespace CryptoVision.Api.Hubs
             }
         }
 
+        [AllowAnonymous]
         public void SubscribeKline(string symbol, string interval)
         {
             _klineService.Subscribe(Context.ConnectionId);
         }
 
+        public void RegisterConnection()
+        {
+            var acc = Context.GetHttpContext().Items["Account"] as Account;
+            _gameService.EmailConnectionId.Add(acc.Email, Context.ConnectionId);
+        }
+
         public override async Task OnDisconnectedAsync(Exception exception)
         {
+            var acc = Context.GetHttpContext().Items["Account"] as Account;
+
             await Task.Run(() => _klineService.Unsubscribe(Context.ConnectionId));
+
+            if (acc != null)
+            {
+                _gameService.EmailConnectionId.Remove(acc.Email);
+            }
         }
 
         private async Task<List<ResponseKlineModel>> GetByData(string symbol, string interval, long startTime, long end)
@@ -85,6 +104,11 @@ namespace CryptoVision.Api.Hubs
         public string GetConnectionId()
         {
             return Context.ConnectionId;
+        }
+
+        public async Task Authenticate(string token)
+        {
+            _klineService.Authenticate(Context.ConnectionId, token);
         }
     }
 }

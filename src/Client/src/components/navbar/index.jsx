@@ -8,7 +8,7 @@ import { useSetState } from '../../helpers'
 const { Item, SubMenu } = Menu
 
 const nav = {
-    apps: '/applications',
+    apps: '/gambling',
     users: '/admin/users'
 }
 
@@ -23,7 +23,7 @@ const Navbar = () => {
     return (
         <Menu onClick={e => setState({ current: e.key })} selectedKeys={[state.current]} style={{ padding: '0 50px' }} mode="horizontal">
             <Item key={nav.apps} icon={<UnorderedListOutlined />}>
-                <Link to={nav.apps}>Applications</Link>
+                <Link to={nav.apps}>Crypto Battle</Link>
             </Item>
 
             <Item key={nav.users} icon={<UsergroupAddOutlined />}>

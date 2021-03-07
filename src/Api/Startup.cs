@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Http;
 using System.Globalization;
 using CryptoVision.Api.Services;
 using System.Linq;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ConfigurationMiddleware
 {
@@ -45,6 +46,7 @@ namespace ConfigurationMiddleware
                 });
 
             services.AddSignalR();
+            services.AddSingleton<IUserIdProvider, IdBasedUserIdProvider>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

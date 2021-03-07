@@ -74,6 +74,7 @@ namespace Application
             _context.SaveChanges();
 
             var response = _mapper.Map<AuthenticateResponse>(account);
+            response.JwtToken = jwtToken;
             response.AccessToken = jwtToken;
             response.RefreshToken = refreshToken.Token;
             return response;
@@ -99,7 +100,7 @@ namespace Application
             var jwtToken = generateJwtToken(account);
 
             var response = _mapper.Map<AuthenticateResponse>(account);
-            response.AccessToken = jwtToken;
+            response.JwtToken = jwtToken;
             response.RefreshToken = newRefreshToken.Token;
             return response;
         }
