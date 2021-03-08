@@ -184,8 +184,6 @@ namespace CryptoVision.Api.Services
 
         public void SendMessage(SignalMessage message)
         {
-            var cl = klineHub.Clients.Client(EmailConnectionId[message.Player.Email]);
-
             klineHub.Clients.Client(EmailConnectionId[message.Player.Email]).SendAsync(message.Name, message);
             Console.WriteLine($"{message.Name}: {message}");
         }

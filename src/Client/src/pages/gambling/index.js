@@ -14,7 +14,8 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   TrophyTwoTone,
-  FundTwoTone
+  FundTwoTone,
+  StopTwoTone
 } from '@ant-design/icons'
 import getWindowDimensions from '../../helpers/getWindowDimensions'
 import Meta from 'antd/lib/card/Meta'
@@ -63,6 +64,26 @@ const Gambling = () => {
   const [threshold, setThreshold] = React.useState(0)
   const [currentPrice, setCurrentPrice] = React.useState(0)
 
+  const reset = () => {
+    setIsEmptyState(true)
+    setIsBetPlacedState(false)
+    setIsMatchStarted(false)
+    setIsMatchEnded(false)
+  
+    setBetAmount(10)
+    setIsRiseOrFall(null)
+  
+    setWinningText('')
+    setLosingText('')
+  
+    setWon(null)
+  
+    setOpponentName('')
+    setOpenPrice(0)
+    setThreshold(0)
+    setCurrentPrice(0)
+  }
+
   const BetPlaced = () => {
     setIsEmptyState(false)
     setIsBetPlacedState(true)
@@ -109,6 +130,7 @@ const Gambling = () => {
       setWon(message.won)
       setIsMatchEnded(true)
       setIsMatchStarted(false)
+      debugger
     })
   }
 
@@ -245,9 +267,9 @@ const Gambling = () => {
         {/* IsMatchStarted */}
         <Flexed conditions={isMatchEnded}>
           <Result
-            icon={<TrophyTwoTone twoToneColor={consts.colors.win} />}
-            title={won ? winningText : losingText}
-            extra={<Button type="primary">Re-Battle!</Button>}
+            icon={won ? <TrophyTwoTone twoToneColor={consts.colors.win} /> : <StopTwoTone twoToneColor={consts.colors.loose} />}
+            title={won ? 'Impressive, You Won!' : 'Lost, Will You Try Again?'}
+            extra={<Button type="primary" onClick={reset}>Re-Battle!</Button>}
           />
         </Flexed>
       </div>
