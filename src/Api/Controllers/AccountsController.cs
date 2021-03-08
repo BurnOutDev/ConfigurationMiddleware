@@ -61,6 +61,23 @@ namespace Api.Controllers
             }));
         }
 
+        [HttpGet("[action]")]
+        public IActionResult GetBalance() => Ok(Account.Balance);
+
+        [HttpPost("[action]")]
+        public IActionResult ChangeBalance(BalanceRequest balance)
+        {
+            if (balance.Decrease)
+            {
+                Account.Balance -= balance.Amount;
+            }
+            else
+            {
+                Account.Balance += balance.Amount;
+            }
+            return Ok();
+        }
+
         [HttpPost("authenticate")]
         public ActionResult<AuthenticateResponse> Authenticate(AuthenticateRequest model)
         {

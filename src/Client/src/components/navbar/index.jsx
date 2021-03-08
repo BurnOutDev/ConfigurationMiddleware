@@ -25,11 +25,6 @@ const Navbar = () => {
             <Item key={nav.apps} icon={<UnorderedListOutlined />}>
                 <Link to={nav.apps}>Crypto Battle</Link>
             </Item>
-
-            <Item key={nav.users} icon={<UsergroupAddOutlined />}>
-                <Link to={nav.users}>Users</Link>
-            </Item>
-
             <SubMenu title={state.userName} style={{ float: 'right' }} icon={<UserOutlined />}>
                 {/* <Item key="profile" icon={<ProfileOutlined />}>Profile</Item> */}
                 <Item key="logout" icon={<LogoutOutlined />} onClick={accountService.logout}>Logout</Item>

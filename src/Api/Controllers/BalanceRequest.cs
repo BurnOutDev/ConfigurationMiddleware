@@ -1,0 +1,8 @@
+﻿namespace Api.Controllers
+{
+    public class BalanceRequest
+    {
+        public decimal Amount { get; set; }
+        public bool Decrease { get; set; }
+    }
+}

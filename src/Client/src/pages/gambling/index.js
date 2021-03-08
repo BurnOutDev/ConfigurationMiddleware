@@ -4,6 +4,7 @@ import {
   InputNumber,
   Progress,
   Result,
+  Space,
   Spin,
   Statistic
 } from 'antd'
@@ -69,15 +70,15 @@ const Gambling = () => {
     setIsBetPlacedState(false)
     setIsMatchStarted(false)
     setIsMatchEnded(false)
-  
+
     setBetAmount(10)
     setIsRiseOrFall(null)
-  
+
     setWinningText('')
     setLosingText('')
-  
+
     setWon(null)
-  
+
     setOpponentName('')
     setOpenPrice(0)
     setThreshold(0)
@@ -170,6 +171,7 @@ const Gambling = () => {
             value={betAmount}
             step={5}
             disabled={isRiseOrFall !== null}
+            size="large"
           />
         </Flexed>
         <Flexed conditions={isEmptyState}>
@@ -192,7 +194,10 @@ const Gambling = () => {
             title="Waiting for opponent..."
           />
         </Flexed>
-        <Flexed conditions={isBetPlacedState || isMatchStarted}>
+        <Flexed conditions={isMatchStarted}>
+          <Result title="Started, Good Luck!" />
+        </Flexed>
+        <Flexed conditions={isBetPlacedState || isMatchStarted || isMatchEnded}>
           <Card>
             <Statistic
               title="Bet Amount"
@@ -223,9 +228,6 @@ const Gambling = () => {
           </Card>
         </Flexed>
         {/* IsMatchStarted */}
-        <Flexed conditions={isMatchStarted}>
-          <Result title="Started, Good Luck!" />
-        </Flexed>
         <Flexed conditions={isMatchStarted}>
           <Card
             style={{
@@ -260,16 +262,26 @@ const Gambling = () => {
             strokeWidth={12}
           />
         </Flexed>
-        <Flexed conditions={true}>
+        <Flexed conditions={isMatchStarted}>
           <Statistic title="Threshold" value={threshold} />
           <Statistic title="CurrentPrice" value={currentPrice} />
         </Flexed>
         {/* IsMatchStarted */}
         <Flexed conditions={isMatchEnded}>
           <Result
-            icon={won ? <TrophyTwoTone twoToneColor={consts.colors.win} /> : <StopTwoTone twoToneColor={consts.colors.loose} />}
+            icon={
+              won ? (
+                <TrophyTwoTone twoToneColor={consts.colors.win} />
+              ) : (
+                <StopTwoTone twoToneColor={consts.colors.loose} />
+              )
+            }
             title={won ? 'Impressive, You Won!' : 'Lost, Will You Try Again?'}
-            extra={<Button type="primary" onClick={reset}>Re-Battle!</Button>}
+            extra={
+              <Button type="primary" onClick={reset}>
+                Re-Battle!
+              </Button>
+            }
           />
         </Flexed>
       </div>

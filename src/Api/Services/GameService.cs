@@ -140,19 +140,19 @@ namespace CryptoVision.Api.Services
 
             LongPriceMatches.Keys.ToList().ForEach(x =>
             {
-                if (x > closePrice + Threshold)
+                if (closePrice > x)
                     EndGame(LongPriceMatches[x]);
             });
 
             ShortPriceMatches.Keys.ToList().ForEach(x =>
             {
-                if (x < closePrice - Threshold)
+                if (closePrice < x)
                     EndGame(ShortPriceMatches[x]);
             });
 
             TimeMatches.Keys.ToList().ForEach(x =>
             {
-                if (x > unixDate + ThresholdTime)
+                if (unixDate > x)
                     EndGame(TimeMatches[x]);
             });
         }
