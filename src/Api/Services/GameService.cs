@@ -17,7 +17,7 @@ namespace CryptoVision.Api.Services
 {
     public class GameService
     {
-        private int Threshold = 5;
+        private decimal Threshold = 150;
         private int ThresholdTime = 60000;
 
         #region SortedDictionaries
@@ -80,8 +80,8 @@ namespace CryptoVision.Api.Services
 
                         PendingMatched.Add(g);
 
-                        SendMessage(new MatchPending(x.User, g.Uid, sb.User.Name));
-                        SendMessage(new MatchPending(sb.User, g.Uid, x.User.Name));
+                        //SendMessage(new MatchPending(x.User, g.Uid, sb.User.Name));
+                        //SendMessage(new MatchPending(sb.User, g.Uid, x.User.Name));
                     }
                 });
 
@@ -107,7 +107,7 @@ namespace CryptoVision.Api.Services
         {
             #region Match process
             var unixDate = data.EventTime;
-            var openPrice = data.KlineItems.OpenPrice;
+            var closePrice = data.KlineItems.ClosePrice;
 
             if (PendingMatched.Count > 0)
             {
@@ -121,27 +121,32 @@ namespace CryptoVision.Api.Services
                 PendingMatched.Where(x => gids.Contains(x.Uid)).ToList().ForEach(x =>
                 {
                     TimeMatches.Add(unixDate + ThresholdTime, x.Uid);
-                    LongPriceMatches.Add(openPrice + Threshold, x.Uid);
-                    ShortPriceMatches.Add(openPrice - Threshold, x.Uid);
-                    
-                    SendMessage(new MatchStarted(x.PlayerWhoBetLong, openPrice));
-                    SendMessage(new MatchStarted(x.PlayerWhoBetShort, openPrice));
+                    LongPriceMatches.Add(closePrice + Threshold, x.Uid);
+                    ShortPriceMatches.Add(closePrice - Threshold, x.Uid);
+
+                    SendMessage(new MatchStarted(x.PlayerWhoBetLong, closePrice, Threshold));
+                    SendMessage(new MatchStarted(x.PlayerWhoBetShort, closePrice, Threshold));
                 });
                 PendingMatched.RemoveAll(x => Matched.Select(y => y.Uid).Contains(x.Uid));
             }
 
-            Matched.ForEach(x => x.KlineStreams.Add(data));
+            Matched.ForEach(x =>
+            {
+                x.KlineStreams.Add(data);
+                SendMessage(new PriceEvent(x.PlayerWhoBetLong, closePrice, unixDate));
+                SendMessage(new PriceEvent(x.PlayerWhoBetShort, closePrice, unixDate));
+            });
             #endregion
 
             LongPriceMatches.Keys.ToList().ForEach(x =>
             {
-                if (x > openPrice + Threshold)
+                if (x > closePrice + Threshold)
                     EndGame(LongPriceMatches[x]);
             });
 
             ShortPriceMatches.Keys.ToList().ForEach(x =>
             {
-                if (x < openPrice - Threshold)
+                if (x < closePrice - Threshold)
                     EndGame(ShortPriceMatches[x]);
             });
 
@@ -163,8 +168,18 @@ namespace CryptoVision.Api.Services
             ShortPriceMatches.Remove(ShortPriceMatches.FirstOrDefault(m => m.Value == g.Uid).Key);
             TimeMatches.Remove(TimeMatches.FirstOrDefault(m => m.Value == g.Uid).Key);
 
-            SendMessage(new GameEnded(g.PlayerWhoBetShort));
-            SendMessage(new GameEnded(g.PlayerWhoBetLong));
+            var delta = g.KlineStreams.LastOrDefault().KlineItems.ClosePrice - g.KlineStreams.FirstOrDefault().KlineItems.ClosePrice;
+
+            if (delta < 0)
+            {
+                SendMessage(new GameEnded(g.PlayerWhoBetShort, true, false));
+                SendMessage(new GameEnded(g.PlayerWhoBetLong, false, false));
+            }
+            else
+            {
+                SendMessage(new GameEnded(g.PlayerWhoBetShort, false, false));
+                SendMessage(new GameEnded(g.PlayerWhoBetLong, true, false));
+            }
         }
 
         public void SendMessage(SignalMessage message)
@@ -217,21 +232,26 @@ namespace SignalREvents
 
     public class MatchStarted : SignalMessage
     {
-        public MatchStarted(Player receiver, decimal startPrice) : base(receiver, nameof(MatchStarted))
+        public MatchStarted(Player receiver, decimal startPrice, decimal threshold) : base(receiver, nameof(MatchStarted))
         {
             StartPrice = startPrice;
+            Threshold = threshold;
         }
 
         public decimal StartPrice { get; set; }
+        public decimal Threshold { get; set; }
     }
 
     public class GameEnded : SignalMessage
     {
-        public GameEnded(Player receiver) : base(receiver, nameof(GameEnded))
+        public GameEnded(Player receiver, bool isWinner, bool isDraw) : base(receiver, nameof(GameEnded))
         {
+            Won = isWinner;
+            Draw = isDraw;
         }
 
         public bool Won { get; set; }
+        public bool Draw { get; set; }
     }
 
     public class PriceEvent : SignalMessage

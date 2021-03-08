@@ -13,7 +13,8 @@ import {
   DollarTwoTone,
   ArrowUpOutlined,
   ArrowDownOutlined,
-  TrophyTwoTone
+  TrophyTwoTone,
+  FundTwoTone
 } from '@ant-design/icons'
 import getWindowDimensions from '../../helpers/getWindowDimensions'
 import Meta from 'antd/lib/card/Meta'
@@ -57,14 +58,20 @@ const Gambling = () => {
 
   const [won, setWon] = React.useState(null)
 
+  const [opponentName, setOpponentName] = React.useState('')
+  const [openPrice, setOpenPrice] = React.useState(0)
+  const [threshold, setThreshold] = React.useState(0)
+  const [currentPrice, setCurrentPrice] = React.useState(0)
+
   const BetPlaced = () => {
     setIsEmptyState(false)
     setIsBetPlacedState(true)
   }
 
-  const MatchPending = () => {
+  const MatchPending = (opponentName) => {
     setIsBetPlacedState(false)
     setIsMatchStarted(true)
+    setOpponentName(opponentName)
   }
 
   const ClickShort = () => {
@@ -81,16 +88,27 @@ const Gambling = () => {
 
   const hookOnEvents = () => {
     gamblingService.connection.on('BetPlaced', (message) => {
-      if (message) {
-        BetPlaced()
-      }
+      BetPlaced()
     })
 
-    gamblingService.connection.on('MatchPending', (message) => {
-      if (message) {
-        debugger
-        MatchPending()
-      }
+    // gamblingService.connection.on('MatchPending', (message) => {
+    //   MatchPending(message.opponentName)
+    // })
+
+    gamblingService.connection.on('MatchStarted', (message) => {
+      MatchPending(message.player.name)
+      setOpenPrice(message.startPrice)
+      setThreshold(message.threshold)
+    })
+
+    gamblingService.connection.on('PriceEvent', (message) => {
+      setCurrentPrice(message.currentPrice)
+    })
+
+    gamblingService.connection.on('GameEnded', (message) => {
+      setWon(message.won)
+      setIsMatchEnded(true)
+      setIsMatchStarted(false)
     })
   }
 
@@ -160,6 +178,15 @@ const Gambling = () => {
               prefix={<DollarTwoTone />}
             />
           </Card>
+          {isMatchStarted && (
+            <Card>
+              <Statistic
+                title="Open Price"
+                value={openPrice}
+                prefix={<FundTwoTone />}
+              />
+            </Card>
+          )}
           <Card>
             <Statistic
               title="Prediction"
@@ -187,22 +214,33 @@ const Gambling = () => {
             }}>
             <Meta
               avatar={
-                <Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png" />
+                <Avatar
+                  style={{
+                    backgroundColor: isRiseOrFall
+                      ? consts.colors.loose
+                      : consts.colors.win
+                  }}>
+                  {opponentName[0]}
+                </Avatar>
               }
-              title="opponent@email.com"
+              title={opponentName}
               description="Rank: 48112"
             />
           </Card>
         </Flexed>
         <Flexed conditions={isMatchStarted}>
           <Progress
-            percent={60}
+            percent={currentPrice - openPrice}
             strokeColor={consts.colors.win}
             trailColor={consts.colors.loose}
             showInfo={false}
             strokeLinecap="square"
             strokeWidth={12}
           />
+        </Flexed>
+        <Flexed conditions={true}>
+          <Statistic title="Threshold" value={threshold} />
+          <Statistic title="CurrentPrice" value={currentPrice} />
         </Flexed>
         {/* IsMatchStarted */}
         <Flexed conditions={isMatchEnded}>
