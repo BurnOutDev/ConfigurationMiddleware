@@ -14,10 +14,10 @@ namespace Application
 {
     public class ClientConfigurationService : IClientConfigurationService
     {
-        private ConfigurationMiddlewareDbContext _context;
+        private GamblingDbContext _context;
         private IMapper _mapper;
 
-        public ClientConfigurationService(ConfigurationMiddlewareDbContext context, IMapper mapper)
+        public ClientConfigurationService(GamblingDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;

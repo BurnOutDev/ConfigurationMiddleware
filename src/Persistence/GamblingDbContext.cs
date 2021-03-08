@@ -7,18 +7,18 @@ using System.Text;
 
 namespace Persistence
 {
-    public class ConfigurationMiddlewareDbContext : DbContext
+    public class GamblingDbContext : DbContext
     {
-        public ConfigurationMiddlewareDbContext() { }
+        public GamblingDbContext() { }
 
-        public ConfigurationMiddlewareDbContext(DbContextOptions<ConfigurationMiddlewareDbContext> options) : base(options)
+        public GamblingDbContext(DbContextOptions<GamblingDbContext> options) : base(options)
         {
             Database.EnsureCreated();
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.ApplyConfigurationsFromAssembly(typeof(ConfigurationMiddlewareDbContext).Assembly);
+            builder.ApplyConfigurationsFromAssembly(typeof(GamblingDbContext).Assembly);
         }
 
         public DbSet<ClientApplication> ClientApplications { get; set; }

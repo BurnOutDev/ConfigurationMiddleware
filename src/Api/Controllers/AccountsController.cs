@@ -31,7 +31,6 @@ namespace Api.Controllers
         [AllowAnonymous]
         public IActionResult Seed()
         {
-            var email = "user@email.com";
             var password = "password";
 
             _accountService.Register(new RegisterRequest
@@ -67,15 +66,8 @@ namespace Api.Controllers
         [HttpPost("[action]")]
         public IActionResult ChangeBalance(BalanceRequest balance)
         {
-            if (balance.Decrease)
-            {
-                Account.Balance -= balance.Amount;
-            }
-            else
-            {
-                Account.Balance += balance.Amount;
-            }
-            return Ok();
+            var response = _accountService.UpdateBalance(Account.Id, balance);
+            return Ok(response);
         }
 
         [HttpPost("authenticate")]

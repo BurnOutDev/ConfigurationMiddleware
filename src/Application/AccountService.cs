@@ -33,17 +33,19 @@ namespace Application
         AccountResponse Create(CreateRequest model);
         AccountResponse Update(int id, UpdateRequest model);
         void Delete(int id);
+
+        BalanceResponse UpdateBalance(int id, BalanceRequest model);
     }
 
     public class AccountService : IAccountService
     {
-        private readonly ConfigurationMiddlewareDbContext _context;
+        private readonly GamblingDbContext _context;
         private readonly IMapper _mapper;
         private readonly AppSettings _appSettings;
         private readonly IEmailService _emailService;
 
         public AccountService(
-            ConfigurationMiddlewareDbContext context,
+            GamblingDbContext context,
             IMapper mapper,
             IOptions<AppSettings> appSettings,
             IEmailService emailService)
@@ -391,6 +393,29 @@ namespace Application
                 html: $@"<h4>Reset Password Email</h4>
                          {message}"
             );
+        }
+
+        public BalanceResponse UpdateBalance(int id, BalanceRequest model)
+        {
+            var acc = _context.Accounts.Find(id);
+
+            if (model.Decrease)
+            {
+                acc.Balance -= model.Amount;
+            }
+            else
+            {
+                acc.Balance += model.Amount;
+            }
+
+            _context.Update(acc);
+
+            _context.SaveChanges();
+
+            return new BalanceResponse
+            {
+                Amount = acc.Balance
+            };
         }
     }
 }

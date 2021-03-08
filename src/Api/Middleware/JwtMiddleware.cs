@@ -25,7 +25,7 @@ namespace Api.Middleware
             _appSettings = appSettings.Value;
         }
 
-        public async Task Invoke(HttpContext context, ConfigurationMiddlewareDbContext dataContext)
+        public async Task Invoke(HttpContext context, GamblingDbContext dataContext)
         {
             var request = context.Request;
 
@@ -43,7 +43,7 @@ namespace Api.Middleware
             await _next(context);
         }
 
-        private async Task attachAccountToContext(HttpContext context, ConfigurationMiddlewareDbContext dataContext, string token)
+        private async Task attachAccountToContext(HttpContext context, GamblingDbContext dataContext, string token)
         {
             try
             {

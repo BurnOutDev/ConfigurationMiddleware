@@ -12,6 +12,7 @@ using Api.Hubs;
 using CryptoVision.Api.Services;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using Application;
 
 namespace CryptoVision.Api.Services
 {
@@ -38,8 +39,9 @@ namespace CryptoVision.Api.Services
         public Dictionary<string, string> EmailConnectionId { get; set; }
 
         private readonly IHubContext<KlineHub> klineHub;
+        private readonly IAccountService accountService;
 
-        public GameService(IHubContext<KlineHub> klinehub)
+        public GameService(IHubContext<KlineHub> klinehub, IAccountService accountService)
         {
             UnmatchedShortBets = new HashSet<BetModel>();
             UnmatchedLongBets = new HashSet<BetModel>();
@@ -50,6 +52,7 @@ namespace CryptoVision.Api.Services
             Matched = new List<Game>();
             EndedMatches = new List<Game>();
             EmailConnectionId = new Dictionary<string, string>();
+            this.accountService = accountService;
 
             Task.Run(MatchingTimer);
 
@@ -89,6 +92,8 @@ namespace CryptoVision.Api.Services
             }
         }
 
+        private int GetAccountId(string email) => accountService.GetAll().FirstOrDefault(x => x.Email == email).Id;
+
         public void AddBet(BetModel model)
         {
             if (model.Long)
@@ -99,6 +104,12 @@ namespace CryptoVision.Api.Services
             {
                 UnmatchedShortBets.Add(model);
             }
+
+            accountService.UpdateBalance(GetAccountId(model.User.Email), new Domain.Models.Accounts.BalanceRequest
+            {
+                Amount = model.Amount,
+                Decrease = true
+            });
 
             SendMessage(new BetPlaced(model.User, model.Amount, model.Long, model.Short));
         }
@@ -174,11 +185,21 @@ namespace CryptoVision.Api.Services
             {
                 SendMessage(new GameEnded(g.PlayerWhoBetShort, true, false));
                 SendMessage(new GameEnded(g.PlayerWhoBetLong, false, false));
+
+                accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetShort.Email), new Domain.Models.Accounts.BalanceRequest
+                {
+                    Amount = g.Amount * 2
+                });
             }
             else
             {
                 SendMessage(new GameEnded(g.PlayerWhoBetShort, false, false));
                 SendMessage(new GameEnded(g.PlayerWhoBetLong, true, false));
+
+                accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetLong.Email), new Domain.Models.Accounts.BalanceRequest
+                {
+                    Amount = g.Amount * 2
+                });
             }
         }
 

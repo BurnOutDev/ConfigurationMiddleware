@@ -1,4 +1,4 @@
-﻿namespace Api.Controllers
+﻿namespace Domain.Models.Accounts
 {
     public class BalanceRequest
     {

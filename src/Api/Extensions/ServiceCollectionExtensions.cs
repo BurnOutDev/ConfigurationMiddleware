@@ -25,16 +25,19 @@ namespace ConfigurationMiddleware.Extensions
 
         public static IServiceCollection AddContext(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<ConfigurationMiddlewareDbContext>(x => x.UseInMemoryDatabase("InMemoryDatabase"));
+            services.AddDbContext<GamblingDbContext>(x =>
+            {
+                x.UseInMemoryDatabase("InMemoryDatabase");
+            }, ServiceLifetime.Singleton);
             return services;
         }
 
         public static IServiceCollection AddDI(this IServiceCollection services)
         {
-            services.AddScoped<IClientConfigurationService, ClientConfigurationService>();
+            services.AddSingleton<IClientConfigurationService, ClientConfigurationService>();
 
-            services.AddScoped<IAccountService, AccountService>();
-            services.AddScoped<IEmailService, EmailService>();
+            services.AddSingleton<IAccountService, AccountService>();
+            services.AddSingleton<IEmailService, EmailService>();
 
             return services;
         }
