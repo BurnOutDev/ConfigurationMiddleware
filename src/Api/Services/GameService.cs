@@ -80,8 +80,8 @@ namespace CryptoVision.Api.Services
 
                         PendingMatched.Add(g);
 
-                        //SendMessage(new MatchPending(x.User, g.Uid, sb.User.Name));
-                        //SendMessage(new MatchPending(sb.User, g.Uid, x.User.Name));
+                        SendMessage(new MatchPending(x.User, g.Uid, sb.User.Name));
+                        SendMessage(new MatchPending(sb.User, g.Uid, x.User.Name));
                     }
                 });
 
@@ -124,8 +124,8 @@ namespace CryptoVision.Api.Services
                     LongPriceMatches.Add(closePrice + Threshold, x.Uid);
                     ShortPriceMatches.Add(closePrice - Threshold, x.Uid);
 
-                    SendMessage(new MatchStarted(x.PlayerWhoBetLong, closePrice, Threshold));
-                    SendMessage(new MatchStarted(x.PlayerWhoBetShort, closePrice, Threshold));
+                    SendMessage(new MatchStarted(x.PlayerWhoBetLong, closePrice, Threshold, x.PlayerWhoBetShort.Name));
+                    SendMessage(new MatchStarted(x.PlayerWhoBetShort, closePrice, Threshold, x.PlayerWhoBetLong.Name));
                 });
                 PendingMatched.RemoveAll(x => Matched.Select(y => y.Uid).Contains(x.Uid));
             }
@@ -230,14 +230,16 @@ namespace SignalREvents
 
     public class MatchStarted : SignalMessage
     {
-        public MatchStarted(Player receiver, decimal startPrice, decimal threshold) : base(receiver, nameof(MatchStarted))
+        public MatchStarted(Player receiver, decimal startPrice, decimal threshold, string opponentName) : base(receiver, nameof(MatchStarted))
         {
             StartPrice = startPrice;
             Threshold = threshold;
+            OpponentName = opponentName;
         }
 
         public decimal StartPrice { get; set; }
         public decimal Threshold { get; set; }
+        public string OpponentName { get; set; }
     }
 
     public class GameEnded : SignalMessage

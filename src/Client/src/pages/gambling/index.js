@@ -118,7 +118,7 @@ const Gambling = () => {
     // })
 
     gamblingService.connection.on('MatchStarted', (message) => {
-      MatchPending(message.player.name)
+      MatchPending(message.opponentName)
       setOpenPrice(message.startPrice)
       setThreshold(message.threshold)
     })
