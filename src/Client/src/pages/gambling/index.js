@@ -24,6 +24,7 @@ import Meta from 'antd/lib/card/Meta'
 import Avatar from 'antd/lib/avatar/avatar'
 import { gamblingService } from '../../services/gambling.service'
 import { accountService } from '../../services'
+import config from '../../config'
 
 const consts = {
   colors: {
@@ -166,7 +167,7 @@ const Gambling = () => {
         flexDirection: 'row'
       }}>
       <IFrame
-        url="http://localhost:4200"
+        url={config.iframeUrl}
         id="myId"
         height={getWindowDimensions().height - 50}
         width={getWindowDimensions().width - 500}
