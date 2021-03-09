@@ -105,13 +105,15 @@ namespace CryptoVision.Api.Services
                 UnmatchedShortBets.Add(model);
             }
 
-            accountService.UpdateBalance(GetAccountId(model.User.Email), new Domain.Models.Accounts.BalanceRequest
+            var balance = accountService.UpdateBalance(GetAccountId(model.User.Email), new Domain.Models.Accounts.BalanceRequest
             {
                 Amount = model.Amount,
                 Decrease = true
             });
 
-            SendMessage(new BetPlaced(model.User, model.Amount, model.Long, model.Short));
+            SendMessage(new BalanceUpdated(model.User, balance.Amount));
+
+            SendMessage(new BetPlaced(model.User, model.Amount, model.Long, model.Short, balance.Amount));
         }
 
         public void PriceUpdated(ResponseKlineStreamModel data)
@@ -181,25 +183,31 @@ namespace CryptoVision.Api.Services
 
             var delta = g.KlineStreams.LastOrDefault().KlineItems.ClosePrice - g.KlineStreams.FirstOrDefault().KlineItems.ClosePrice;
 
+            decimal balance = 0;
+
             if (delta < 0)
             {
-                SendMessage(new GameEnded(g.PlayerWhoBetShort, true, false));
-                SendMessage(new GameEnded(g.PlayerWhoBetLong, false, false));
-
-                accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetShort.Email), new Domain.Models.Accounts.BalanceRequest
+                balance = accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetShort.Email), new Domain.Models.Accounts.BalanceRequest
                 {
                     Amount = g.Amount * 2
-                });
+                }).Amount;
+
+                SendMessage(new BalanceUpdated(g.PlayerWhoBetShort, balance));
+
+                SendMessage(new GameEnded(g.PlayerWhoBetShort, true, false));
+                SendMessage(new GameEnded(g.PlayerWhoBetLong, false, false));
             }
             else
             {
-                SendMessage(new GameEnded(g.PlayerWhoBetShort, false, false));
-                SendMessage(new GameEnded(g.PlayerWhoBetLong, true, false));
-
-                accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetLong.Email), new Domain.Models.Accounts.BalanceRequest
+                balance = accountService.UpdateBalance(GetAccountId(g.PlayerWhoBetLong.Email), new Domain.Models.Accounts.BalanceRequest
                 {
                     Amount = g.Amount * 2
-                });
+                }).Amount;
+
+                SendMessage(new BalanceUpdated(g.PlayerWhoBetLong, balance));
+
+                SendMessage(new GameEnded(g.PlayerWhoBetShort, false, false));
+                SendMessage(new GameEnded(g.PlayerWhoBetLong, true, false));
             }
         }
 
@@ -215,16 +223,18 @@ namespace SignalREvents
 {
     public class BetPlaced : SignalMessage
     {
-        public BetPlaced(Player receiver, decimal amount, bool @long, bool @short) : base(receiver, nameof(BetPlaced))
+        public BetPlaced(Player receiver, decimal amount, bool @long, bool @short, decimal remainingBalance) : base(receiver, nameof(BetPlaced))
         {
             Amount = amount;
             Long = @long;
             Short = @short;
+            RemainingBalance = remainingBalance;
         }
 
         public decimal Amount { get; set; }
         public bool Long { get; set; }
         public bool Short { get; set; }
+        public decimal RemainingBalance { get; set; }
 
         public override string ToString()
         {
@@ -232,6 +242,16 @@ namespace SignalREvents
 
             return $"E: {Player.Email} ${Amount} {bet}";
         }
+    }
+
+    public class BalanceUpdated : SignalMessage
+    {
+        public BalanceUpdated(Player receiver, decimal amount) : base(receiver, nameof(BalanceUpdated))
+        {
+            Amount = amount;
+        }
+
+        public decimal Amount { get; set; }
     }
 
     public class MatchPending : SignalMessage

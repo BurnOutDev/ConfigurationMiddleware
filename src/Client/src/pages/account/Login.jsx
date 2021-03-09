@@ -42,6 +42,9 @@ const Login = ({ history, location }) => {
                             <Form.Item>
                                 <Button type="primary" htmlType="submit" loading={submitting} block>Login</Button>
                             </Form.Item>
+                            <Form.Item>
+                                <Link to="register" className="btn btn-link">Register new account</Link>
+                            </Form.Item>
                         </div>
                     </Form>
                 </Card>
@@ -52,8 +55,8 @@ const Login = ({ history, location }) => {
 
 const Title = () => (
     <Space direction='vertical' align='center' style={{ width: '100%' }}>
-        <Typography.Title style={{ fontSize: 24 }}>Configuration Middleware</Typography.Title>
+        <Typography.Title style={{ fontSize: 24 }}>Crypto Battle</Typography.Title>
     </Space>
 )
 
-export { Login } 
+export { Login }

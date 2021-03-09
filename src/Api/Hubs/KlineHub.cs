@@ -43,7 +43,7 @@ namespace CryptoVision.Api.Hubs
         [AllowAnonymous]
         public void SubscribeKline(string symbol, string interval)
         {
-            _klineService.Subscribe(Context.ConnectionId);
+            //_klineService.Subscribe(Context.ConnectionId);
         }
 
         public void RegisterConnection()

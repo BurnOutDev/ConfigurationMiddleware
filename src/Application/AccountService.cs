@@ -143,12 +143,15 @@ namespace Application
             account.Verified = DateTime.UtcNow;
             account.VerificationToken = null;
 
+            account.Verified = DateTime.UtcNow;
+            account.VerificationToken = null;
+
             // save account
             _context.Accounts.Add(account);
             _context.SaveChanges();
 
             // send email
-            sendVerificationEmail(account, origin);
+            //sendVerificationEmail(account, origin);
         }
 
         public void VerifyEmail(string token)

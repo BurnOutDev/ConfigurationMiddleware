@@ -77,6 +77,10 @@ const getById = (id) => {
   return fetchWrapper.get(`${baseUrl}/${id}`)
 }
 
+const getBalance = () => {
+  return fetchWrapper.get(`${baseUrl}/GetBalance`)
+}
+
 const create = (params) => {
   return fetchWrapper.post(baseUrl, params)
 }
@@ -137,5 +141,6 @@ export const accountService = {
   user: userSubject.asObservable(),
   get userValue() {
     return userSubject.value
-  }
+  },
+  getBalance
 }

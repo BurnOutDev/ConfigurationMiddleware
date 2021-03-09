@@ -40,7 +40,8 @@ namespace Api.Controllers
                 Email = "iraklimurusidze@live.com",
                 FirstName = "Irakli",
                 LastName = "Murusidze",
-                Password = password
+                Password = password,
+                Balance = 100
             }, "InMemory Initialization");
 
             _accountService.Register(new RegisterRequest
@@ -50,7 +51,8 @@ namespace Api.Controllers
                 Email = "user@email.com",
                 FirstName = "Firstname",
                 LastName = "Lastname",
-                Password = password
+                Password = password,
+                Balance = 90
             }, "InMemory Initialization");
 
             return Ok(_accountService.GetAll().Select(x => new

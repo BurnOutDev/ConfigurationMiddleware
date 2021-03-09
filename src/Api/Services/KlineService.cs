@@ -29,6 +29,7 @@ namespace CryptoVision.Api.Services
         {
             _hubContext = hubContext;
             this.gameService = gameService;
+            Subscribe(Guid.NewGuid().ToString());
         }
 
         public void Authenticate(string callerId, string token)

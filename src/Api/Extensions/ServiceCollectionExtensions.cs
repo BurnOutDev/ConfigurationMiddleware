@@ -28,6 +28,7 @@ namespace ConfigurationMiddleware.Extensions
             services.AddDbContext<GamblingDbContext>(x =>
             {
                 x.UseInMemoryDatabase("InMemoryDatabase");
+                //x.UseSqlServer(configuration.GetConnectionString("Connection"));
             }, ServiceLifetime.Singleton);
             return services;
         }

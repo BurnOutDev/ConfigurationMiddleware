@@ -1,6 +1,7 @@
 import {
   Button,
   Card,
+  Descriptions,
   InputNumber,
   Progress,
   Result,
@@ -22,6 +23,7 @@ import getWindowDimensions from '../../helpers/getWindowDimensions'
 import Meta from 'antd/lib/card/Meta'
 import Avatar from 'antd/lib/avatar/avatar'
 import { gamblingService } from '../../services/gambling.service'
+import { accountService } from '../../services'
 
 const consts = {
   colors: {
@@ -52,7 +54,7 @@ const Gambling = () => {
   const [isMatchStarted, setIsMatchStarted] = React.useState(false)
   const [isMatchEnded, setIsMatchEnded] = React.useState(false)
 
-  const [betAmount, setBetAmount] = React.useState(10)
+  const [betAmount, setBetAmount] = React.useState(0)
   const [isRiseOrFall, setIsRiseOrFall] = React.useState(null)
 
   const [winningText, setWinningText] = React.useState('')
@@ -64,6 +66,15 @@ const Gambling = () => {
   const [openPrice, setOpenPrice] = React.useState(0)
   const [threshold, setThreshold] = React.useState(0)
   const [currentPrice, setCurrentPrice] = React.useState(0)
+
+  const [time, setTime] = React.useState(0)
+  const [timeThreshold, setTimeThreshold] = React.useState(30)
+
+  const [currentBalance, setCurrentBalance] = React.useState(0)
+
+  React.useState(() => {
+    accountService.getBalance().then((balance) => setCurrentBalance(balance))
+  }, [])
 
   const reset = () => {
     setIsEmptyState(true)
@@ -133,6 +144,10 @@ const Gambling = () => {
       setIsMatchStarted(false)
       debugger
     })
+
+    gamblingService.connection.on('BalanceUpdated', (message) => {
+      setCurrentBalance(message.amount)
+    })
   }
 
   //#endregion
@@ -167,7 +182,9 @@ const Gambling = () => {
               `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
             }
             parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-            onChange={setBetAmount}
+            onChange={(value) => {
+              if (value > 0) setBetAmount(value)
+            }}
             value={betAmount}
             step={5}
             disabled={isRiseOrFall !== null}
@@ -195,7 +212,17 @@ const Gambling = () => {
           />
         </Flexed>
         <Flexed conditions={isMatchStarted}>
-          <Result title="Started, Good Luck!" />
+          <Result
+            title="Started, Good Luck!"
+            // icon={
+            //   <Progress
+            //     type="circle"
+            //     percent={time}
+            //     steps={30}
+            //     format={(percent) => `${percent} Days`}
+            //   />
+            // }
+          />
         </Flexed>
         <Flexed conditions={isBetPlacedState || isMatchStarted || isMatchEnded}>
           <Card>
